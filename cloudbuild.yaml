@@ -1,0 +1,33 @@
+# Define a substitution variable to make the build more manageable.
+# Cloud Build will automatically substitute the project ID.
+substitutions:
+  _IMAGE_NAME: 'us-central1-docker.pkg.dev/${PROJECT_ID}/my-python-app-repo/my-flask-app'
+
+steps:
+# 1. Build the container image using the substitution variable.
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', '${_IMAGE_NAME}:latest', '.']
+
+# 2. Push the container image to Artifact Registry.
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', '${_IMAGE_NAME}:latest']
+
+# 3. Deploy the container image to Cloud Run.
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+    - 'run'
+    - 'deploy'
+    - 'my-flask-app-service'
+    - '--image=${_IMAGE_NAME}:latest'
+    - '--region=us-central1'
+    - '--platform=managed'
+    - '--allow-unauthenticated'
+
+# List the images produced by the build.
+images:
+- '${_IMAGE_NAME}:latest'
+
+# Configure the logging behavior to resolve a previous error.
+options:
+  logging: CLOUD_LOGGING_ONLY
