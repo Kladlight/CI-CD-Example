@@ -8,6 +8,16 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '-t', '${_IMAGE_NAME}:latest', '.']
 
+# 👇 NEW STEP: Run Tests
+# Use the official Python base image to run tests.
+# Alternatively, you could run tests inside the newly built image 
+# using the 'docker run' entrypoint.
+- name: '${_IMAGE_NAME}:latest' # Use the image built in step 1
+  entrypoint: 'pytest'          # Use pytest as the entrypoint
+  args: ['test_main.py']        # The test file(s) to run
+  # Set the environment variable to stop pytest from rewriting assertions
+  env: ['PYTHONOPTIMIZE=0'] 
+
 # 2. Push the container image to Artifact Registry.
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', '${_IMAGE_NAME}:latest']
